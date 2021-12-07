@@ -1,4 +1,4 @@
-package com.example.weatherj2;
+package com.example.weatherj;
 
 public class ResponseWeatherForecast {
     public Float lat;
