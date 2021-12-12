@@ -3,6 +3,7 @@ package com.example.weatherj;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Context;
+import android.os.AsyncTask;
 import android.os.Bundle;
 //import android.util.Log;
 import android.text.method.ScrollingMovementMethod;
@@ -14,20 +15,17 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.Date;
 
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.HttpUrl;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
 import java.text.SimpleDateFormat;
+import java.util.Scanner;
 
 public class MainActivity extends AppCompatActivity {
     static final String baseURLRemote = "http://api.openweathermap.org/data/2.5/";
@@ -57,45 +55,40 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private final OkHttpClient client = new OkHttpClient();
-
     public void buttonQueryClick(View sender) throws Exception {
         editCity.clearFocus();
         //hide keyboard
         InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(linearLayoutH.getWindowToken(), 0);
 
-        HttpUrl.Builder urlBuilder = HttpUrl.parse(baseURLRemote + "weather").newBuilder();
-        urlBuilder.addQueryParameter("q", editCity.getText().toString());
-        urlBuilder.addQueryParameter("appid", APIkey);
-        String url = urlBuilder.build().toString();
+        String url = baseURLRemote + "weather" +
+            "?" + "q=" + URLEncoder.encode(editCity.getText().toString(), "UTF-8") +
+            "&" + "appid=" + APIkey;
 
-        Request request = new Request.Builder()
-//				.get()
-                .url(url)
-                .build();
-
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                call.cancel();
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-
-                final String myResponse = response.body().string();
-
-                MainActivity.this.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        processWeatherCity(myResponse);
-                    }
-                });
-            }
-        });
-
+        new FetchTask().execute(url);
     }
+
+
+    private class FetchTask extends AsyncTask<String, Void, String> {
+
+        protected String doInBackground(String... urls) {
+            String url = urls[0];
+            try {
+                InputStream inputStream = new java.net.URL(url).openStream();
+                Scanner s = new Scanner(inputStream).useDelimiter("\\A");
+                String result = s.hasNext() ? s.next() : "";
+                return result;
+            } catch (Exception e) {
+                Log.e("Error", e.getMessage());
+                return null;
+            }
+        }
+
+        protected void onPostExecute(String result) {
+            processWeatherCity(result);
+        }
+    }
+
 
     public void processWeatherCity(String weather) {
         Gson gson = new Gson();
@@ -112,43 +105,41 @@ public class MainActivity extends AppCompatActivity {
 //            textResponse.append("\n Humidity " + weatherCity.main.humidity);
 
             queryWeatherForecast(weatherCity);
-        } catch (JsonSyntaxException e) {
-            Log.d("JsonSyntaxException", e.getLocalizedMessage());
+        } catch (Exception e) {
+            Log.d("Exception", e.getLocalizedMessage());
         }
 
     }
 
-    public void queryWeatherForecast(ResponseWeatherCity a_weatherCity) {
-        HttpUrl.Builder urlBuilder = HttpUrl.parse(baseURLRemote + "onecall").newBuilder();
-        urlBuilder.addQueryParameter("lat", a_weatherCity.coord.lat.toString());
-        urlBuilder.addQueryParameter("lon", a_weatherCity.coord.lon.toString());
-        urlBuilder.addQueryParameter("appid", APIkey);
-        String url = urlBuilder.build().toString();
+    public void queryWeatherForecast(ResponseWeatherCity a_weatherCity) throws Exception {
+        String url = baseURLRemote + "onecall" +
+                "?" + "lat=" + URLEncoder.encode(a_weatherCity.coord.lat.toString(), "UTF-8") +
+                "&" + "lon=" + URLEncoder.encode(a_weatherCity.coord.lon.toString(), "UTF-8") +
+                "&" + "appid=" + APIkey;
 
-        Request request = new Request.Builder()
-                .url(url)
-                .build();
-
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                call.cancel();
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-
-                final String myResponse = response.body().string();
-
-                MainActivity.this.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        processWeatherForecast(myResponse);
-                    }
-                });
-            }
-        });
+        new FetchTask2().execute(url);
     }
+
+    private class FetchTask2 extends AsyncTask<String, Void, String> {
+
+        protected String doInBackground(String... urls) {
+            String url = urls[0];
+            try {
+                InputStream inputStream = new java.net.URL(url).openStream();
+                Scanner s = new Scanner(inputStream).useDelimiter("\\A");
+                String result = s.hasNext() ? s.next() : "";
+                return result;
+            } catch (Exception e) {
+                Log.e("Error", e.getMessage());
+                return null;
+            }
+        }
+
+        protected void onPostExecute(String result) {
+            processWeatherForecast(result);
+        }
+    }
+
 
     public void processWeatherForecast(String weather) {
         Gson gson = new Gson();
