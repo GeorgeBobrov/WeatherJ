@@ -16,7 +16,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Date;
 
@@ -65,11 +64,22 @@ public class MainActivity extends AppCompatActivity {
             "?" + "q=" + URLEncoder.encode(editCity.getText().toString(), "UTF-8") +
             "&" + "appid=" + APIkey;
 
-        new FetchTask().execute(url);
+        new FetchStringTask(new FunctionWithStrParam(){
+            public void run(String srt)	{ processWeatherCity(srt); }
+        }).execute(url);
     }
 
+    @FunctionalInterface
+    private interface FunctionWithStrParam {
+        public abstract void run(String srt);
+    }
 
-    private class FetchTask extends AsyncTask<String, Void, String> {
+    private class FetchStringTask extends AsyncTask<String, Void, String> {
+        public FetchStringTask(FunctionWithStrParam functionWithStrParam) {
+            this.functionWithStrParam = functionWithStrParam;
+        }
+
+        FunctionWithStrParam functionWithStrParam;
 
         protected String doInBackground(String... urls) {
             String url = urls[0];
@@ -85,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         protected void onPostExecute(String result) {
-            processWeatherCity(result);
+            functionWithStrParam.run(result);
         }
     }
 
@@ -117,27 +127,9 @@ public class MainActivity extends AppCompatActivity {
                 "&" + "lon=" + URLEncoder.encode(a_weatherCity.coord.lon.toString(), "UTF-8") +
                 "&" + "appid=" + APIkey;
 
-        new FetchTask2().execute(url);
-    }
-
-    private class FetchTask2 extends AsyncTask<String, Void, String> {
-
-        protected String doInBackground(String... urls) {
-            String url = urls[0];
-            try {
-                InputStream inputStream = new java.net.URL(url).openStream();
-                Scanner s = new Scanner(inputStream).useDelimiter("\\A");
-                String result = s.hasNext() ? s.next() : "";
-                return result;
-            } catch (Exception e) {
-                Log.e("Error", e.getMessage());
-                return null;
-            }
-        }
-
-        protected void onPostExecute(String result) {
-            processWeatherForecast(result);
-        }
+        new FetchStringTask(new FunctionWithStrParam(){
+            public void run(String srt)	{ processWeatherForecast(srt); }
+        }).execute(url);
     }
 
 
