@@ -69,35 +69,7 @@ public class MainActivity extends AppCompatActivity {
         }).execute(url);
     }
 
-    @FunctionalInterface
-    private interface FunctionWithStrParam {
-        public abstract void run(String srt);
-    }
 
-    private class FetchStringTask extends AsyncTask<String, Void, String> {
-        public FetchStringTask(FunctionWithStrParam functionWithStrParam) {
-            this.functionWithStrParam = functionWithStrParam;
-        }
-
-        FunctionWithStrParam functionWithStrParam;
-
-        protected String doInBackground(String... urls) {
-            String url = urls[0];
-            try {
-                InputStream inputStream = new java.net.URL(url).openStream();
-                Scanner s = new Scanner(inputStream).useDelimiter("\\A");
-                String result = s.hasNext() ? s.next() : "";
-                return result;
-            } catch (Exception e) {
-                Log.e("Error", e.getMessage());
-                return null;
-            }
-        }
-
-        protected void onPostExecute(String result) {
-            functionWithStrParam.run(result);
-        }
-    }
 
 
     public void processWeatherCity(String weather) {
@@ -170,3 +142,4 @@ public class MainActivity extends AppCompatActivity {
         return Math.round(t - T0);
     }
 }
+
